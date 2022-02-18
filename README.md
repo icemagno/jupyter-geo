@@ -12,3 +12,5 @@ docker run -p 8888:8888 \
 -v /srv/jupyter/:/home/data/ \
 -d magnoabreu/jupyter:1.0
 ```
+![Alt text](image.png?raw=true "Example")
+
