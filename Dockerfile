@@ -154,9 +154,6 @@ COPY jupyter_server_config.py /etc/jupyter/
 USER root
 
 
-
-
-
 ENV SUPPLIBS=$HOME/supplibs 
 ENV PATH="/opt/opengrads:${PATH}"	
 
@@ -209,42 +206,16 @@ RUN apt update && apt -y upgrade \
     grass \
 	grass-dev \
 	python3-grib \
-	python3-pip
+	python3-pip \
+	libgdal-dev \
+	aria2
 	
-RUN apt update && apt -y upgrade && pip3 install \
-	rasterio \
-	geopandas\
-	pygeos \
-	sentinelsat \
-	sentinelhub \
-	matplotlib
-
+	
 COPY ./opengrads-2.2.1.tar.gz /grads/
 
 RUN cd /grads/ && tar -xf opengrads-2.2.1.tar.gz \
 	&& mv opengrads-2.2.1.oga.1/Contents /opt/opengrads \
 	&& rm -rf opengrads-2.2.1*
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 RUN chmod 777 /usr/local/bin/start*
 
@@ -253,7 +224,57 @@ RUN sed -re "s/c.ServerApp/c.NotebookApp/g" \
     /etc/jupyter/jupyter_server_config.py > /etc/jupyter/jupyter_notebook_config.py && \
     fix-permissions /etc/jupyter/
 
+RUN sudo -H apt update && apt -y upgrade && \
+	sudo -H pip3 install \
+	rasterio \
+	geopandas\
+	pygeos \
+	sentinelsat \
+	sentinelhub \
+	matplotlib \
+	grass \
+	grass-session \
+	scipy
+
+RUN conda install -y -c conda-forge \
+	gdal \
+	rasterio \
+	imagemagick \
+	postgis \
+	pygeos \
+	sentinelsat \
+	matplotlib \
+	geopandas \
+	sentinelhub \
+	scipy
+
+RUN git clone https://github.com/ykatsu111/jupyter-grads-kernel && \
+    sudo -H pip install --user git+https://github.com/ykatsu111/jupyter-grads-kernel && \
+	cd jupyter-grads-kernel && \
+	jupyter kernelspec install --user grads_spec && \
+	cd .. && rm -rf jupyter-grads-kernel
+
+RUN wget https://step.esa.int/thirdparties/sen2cor/2.10.0/Sen2Cor-02.10.01-Linux64.run && \
+	sudo -H bash Sen2Cor-02.10.01-Linux64.run --target /usr/bin/sen2cor && \
+	rm -rf Sen2Cor-02.10.01-Linux64.run && \
+	echo "source /usr/bin/sen2cor/L2A_Bashrc" >> ~/.bashrc
+	
+	
+RUN git clone https://github.com/smfm-project/sen2mosaic.git && \
+	mv sen2mosaic /usr/bin/ && \
+	cd /usr/bin/sen2mosaic && \
+	python3 setup.py install && \
+	echo "alias s2m='_s2m() { python3 /usr/bin/sen2mosaic/cli/\"\$1\".py \$(shift; echo \"\$@\") ;}; _s2m'" >> ~/.bashrc	
+	
+RUN conda update --all --quiet --yes && \
+    conda clean --all -f -y 
+
+RUN fix-permissions "/home/${NB_USER}"
+
 # Switch back to jovyan to avoid accidental container runs as root
 USER ${NB_UID}
+
+RUN echo "source /usr/bin/sen2cor/L2A_Bashrc" >> ~/.bashrc && \
+	echo "alias s2m='_s2m() { python3 /usr/bin/sen2mosaic/cli/\"\$1\".py \$(shift; echo \"\$@\") ;}; _s2m'" >> ~/.bashrc	
 
 WORKDIR "${HOME}"
