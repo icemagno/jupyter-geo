@@ -246,7 +246,8 @@ RUN conda install -y -c conda-forge \
 	matplotlib \
 	geopandas \
 	sentinelhub \
-	scipy
+	scipy \
+	earthpy
 
 RUN git clone https://github.com/ykatsu111/jupyter-grads-kernel && \
     sudo -H pip install --user git+https://github.com/ykatsu111/jupyter-grads-kernel && \
@@ -257,7 +258,8 @@ RUN git clone https://github.com/ykatsu111/jupyter-grads-kernel && \
 RUN wget https://step.esa.int/thirdparties/sen2cor/2.10.0/Sen2Cor-02.10.01-Linux64.run && \
 	sudo -H bash Sen2Cor-02.10.01-Linux64.run --target /usr/bin/sen2cor && \
 	rm -rf Sen2Cor-02.10.01-Linux64.run && \
-	echo "source /usr/bin/sen2cor/L2A_Bashrc" >> ~/.bashrc
+	echo "source /usr/bin/sen2cor/L2A_Bashrc" >> ~/.bashrc && \
+	chmod -R 777 /usr/bin/sen2cor/bin
 	
 	
 RUN git clone https://github.com/smfm-project/sen2mosaic.git && \
@@ -266,13 +268,14 @@ RUN git clone https://github.com/smfm-project/sen2mosaic.git && \
 	python3 setup.py install && \
 	echo "alias s2m='_s2m() { python3 /usr/bin/sen2mosaic/cli/\"\$1\".py \$(shift; echo \"\$@\") ;}; _s2m'" >> ~/.bashrc	
 	
+	
 RUN conda update --all --quiet --yes && \
     conda clean --all -f -y 
 
 RUN fix-permissions "/home/${NB_USER}"
 
 # Switch back to jovyan to avoid accidental container runs as root
-USER ${NB_UID}
+# USER ${NB_UID}
 
 RUN echo "source /usr/bin/sen2cor/L2A_Bashrc" >> ~/.bashrc && \
 	echo "alias s2m='_s2m() { python3 /usr/bin/sen2mosaic/cli/\"\$1\".py \$(shift; echo \"\$@\") ;}; _s2m'" >> ~/.bashrc	
