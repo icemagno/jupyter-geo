@@ -247,7 +247,8 @@ RUN conda install -y -c conda-forge \
 	geopandas \
 	sentinelhub \
 	scipy \
-	earthpy
+	earthpy \
+	plotly
 
 RUN git clone https://github.com/ykatsu111/jupyter-grads-kernel && \
     sudo -H pip install --user git+https://github.com/ykatsu111/jupyter-grads-kernel && \
